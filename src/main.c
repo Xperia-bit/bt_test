@@ -17,22 +17,26 @@
 #define DEVICE_NAME CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
 
-/*
- * Set Advertisement data. Based on the Eddystone specification:
- * https://github.com/google/eddystone/blob/master/protocol-specification.md
- * https://github.com/google/eddystone/tree/master/eddystone-url
- */
+// 自定义广播参数
+static const struct bt_le_adv_param *adv_param = BT_LE_ADV_PARAM(
+	(BT_LE_ADV_OPT_SCANNABLE |
+	 BT_LE_ADV_OPT_USE_IDENTITY), /* scannable advertising and use identity address 使用身份地址，可以是public，static，可能是厂商写好，底层随机生成，用户自定义, 否则使用private，每次开机都随机生成一个*/
+	800, /* Min Advertising Interval 500ms (800*0.625ms) */
+	802, /* Max Advertising Interval 500.625ms (801*0.625ms) */
+	NULL); /* Set to NULL for undirected advertising */
+
+// 自定义厂商数据
+typedef struct adv_mfg_data {
+	uint16_t company_code; /* Company Identifier Code. */
+	float acc_x; /* 加速度 */
+	float pressure; /* 气压 */
+} adv_mfg_data_type;
+static adv_mfg_data_type adv_mfg_data = { 0xFFFF, 9.8,1.01 };
+
+// 自定义广播包数据
 static const struct bt_data ad[] = {
-	BT_DATA_BYTES(BT_DATA_FLAGS, BT_LE_AD_NO_BREDR),
-	BT_DATA_BYTES(BT_DATA_UUID16_ALL, 0xaa, 0xfe),
-	BT_DATA_BYTES(BT_DATA_SVC_DATA16,
-		      0xaa, 0xfe, /* Eddystone UUID */
-		      0x10, /* Eddystone-URL frame type */
-		      0x00, /* Calibrated Tx power at 0m */
-		      0x00, /* URL Scheme Prefix http://www. */
-		      'z', 'e', 'p', 'h', 'y', 'r',
-		      'p', 'r', 'o', 'j', 'e', 'c', 't',
-		      0x08) /* .org */
+	BT_DATA_BYTES(BT_DATA_FLAGS, BT_LE_AD_NO_BREDR),// 声明为非经典蓝牙
+	BT_DATA(BT_DATA_MANUFACTURER_DATA, (unsigned char *)&adv_mfg_data, sizeof(adv_mfg_data)),
 };
 
 /* Set Scan Response data */
@@ -42,36 +46,27 @@ static const struct bt_data sd[] = {
 
 static void bt_ready(int err)
 {
-	char addr_s[BT_ADDR_LE_STR_LEN];
-	bt_addr_le_t addr = {0};
-	size_t count = 1;
-
+	// size_t count = 1;
+	bt_addr_le_t addr;
+	err = bt_addr_le_from_str("FF:EE:DD:CC:BB:AA", "random", &addr);
 	if (err) {
-		printk("Bluetooth init failed (err %d)\n", err);
-		return;
+		printk("Invalid BT address (err %d)\n", err);
 	}
 
 	printk("Bluetooth initialized\n");
 
 	/* Start advertising */
-	err = bt_le_adv_start(BT_LE_ADV_NCONN_IDENTITY, ad, ARRAY_SIZE(ad),
+	err = bt_le_adv_start(adv_param, ad, ARRAY_SIZE(ad),
 			      sd, ARRAY_SIZE(sd));
 	if (err) {
 		printk("Advertising failed to start (err %d)\n", err);
 		return;
 	}
 
-
-	/* For connectable advertising you would use
-	 * bt_le_oob_get_local().  For non-connectable non-identity
-	 * advertising an non-resolvable private address is used;
-	 * there is no API to retrieve that.
-	 */
-
-	bt_id_get(&addr, &count);
-	bt_addr_le_to_str(&addr, addr_s, sizeof(addr_s));
-
-	printk("Beacon started, advertising as %s\n", addr_s);
+	// 读取MAC地址打印，这边不读
+	// bt_id_get(&addr, &count);
+	// bt_addr_le_to_str(&addr, addr_s, sizeof(addr_s));
+	// printk("Beacon started, advertising as %s\n", addr_s);
 }
 
 int main(void)
@@ -85,5 +80,10 @@ int main(void)
 	if (err) {
 		printk("Bluetooth init failed (err %d)\n", err);
 	}
-	return 0;
+
+	while(1)
+	{
+		// 延时1s
+		k_sleep(K_MSEC(1000));
+	}
 }
