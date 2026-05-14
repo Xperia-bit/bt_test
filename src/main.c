@@ -19,7 +19,7 @@
 
 // 自定义广播参数
 static const struct bt_le_adv_param *adv_param = BT_LE_ADV_PARAM(
-	(BT_LE_ADV_OPT_SCANNABLE |
+	(BT_LE_ADV_OPT_CONN |
 	 BT_LE_ADV_OPT_USE_IDENTITY), /* scannable advertising and use identity address 使用身份地址，可以是public，static，可能是厂商写好，底层随机生成，用户自定义, 否则使用private，每次开机都随机生成一个*/
 	800, /* Min Advertising Interval 500ms (800*0.625ms) */
 	802, /* Max Advertising Interval 500.625ms (801*0.625ms) */
