@@ -8,11 +8,14 @@
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/sys/printk.h>
 
-#if !DT_HAS_ALIAS(imu_sensor)
-#error "Missing devicetree alias: imu_sensor"
+#if !DT_HAS_ALIAS(bmp581)
+#error "Missing devicetree alias: lsm6dso"
 #endif
 
-static const struct device *const imu_dev = DEVICE_DT_GET(DT_ALIAS(imu_sensor));
+// 看视频跟做
+#include <zephyr/drivers/i2c.h>
+
+static const struct device *const imu_dev = DEVICE_DT_GET(DT_ALIAS(lsm6dso));
 
 static int set_sampling_frequency(const struct device *dev)
 {

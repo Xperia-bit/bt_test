@@ -1,37 +1,64 @@
-#include <zephyr/dt-bindings/sensor/bmp581.h>
-#include <zephyr/dt-bindings/sensor/lsm6dso.h>
-
 / {
-	aliases {
-		pressure-sensor = &bmp581;
-		imu-sensor = &lsm6dso;
-	};
+    /* 1. 自定义输出引脚节点 */
+    pwr_key_out: pwr-key-out {
+        compatible = "gpio-leds";
+        pwr_key: pwr_key {
+            gpios = <&gpio2 10 GPIO_ACTIVE_LOW>;
+            label = "Power Key";
+        };
+        sensor_enable: sensor_enable {
+            gpios = <&gpio1 5 GPIO_ACTIVE_HIGH>;
+            label = "Sensor Enable";
+        };
+    };
+
+    /* 2. 别名 */
+    aliases {
+        pwr-key-gpio = &pwr_key;
+        sensor-enable-gpio = &sensor_enable;
+		bmp581 = &bmp581;
+		lsm6dso = &lsm6dso;
+    };
 };
 
-/* Disable the reference-board IMU node; this design uses an external LSM6DSO. */
-&lsm6ds3tr_c {
-	status = "disabled";
+/* 3. 外设配置 */
+&uart21 {
+    status = "disabled";
 };
 
-/* P0.04 = SDA, P0.03 = SCL on this board definition. */
+/* 4. I2C30 保持启用，并将其引脚重映射到 P0.03 和 P0.04 */
 &i2c30 {
-	status = "okay";
+    status = "okay";
+    pinctrl-0 = <&i2c30_default>;
+    pinctrl-1 = <&i2c30_sleep>;
+    pinctrl-names = "default", "sleep";
 
-	bmp581: bmp581@46 {
-		compatible = "bosch,bmp581";
-		reg = <0x46>;
-		odr = <BMP581_DT_ODR_50_HZ>;
-		press-osr = <BMP581_DT_OVERSAMPLING_8X>;
-		temp-osr = <BMP581_DT_OVERSAMPLING_2X>;
-		press-iir = <BMP581_DT_IIR_FILTER_COEFF_7>;
-		temp-iir = <BMP581_DT_IIR_FILTER_COEFF_3>;
-		power-mode = <BMP581_DT_MODE_NORMAL>;
-		status = "okay";
-	};
+    bmp581: bmp581@46 {
+        compatible = "bosch,bmp581";
+        reg = <0x46>;
+        status = "okay";
+    };
 
-	lsm6dso: lsm6dso@6a {
-		compatible = "st,lsm6dso";
-		reg = <0x6a>;
-		status = "okay";
-	};
+    lsm6dso: lsm6dso@6a {
+        compatible = "st,lsm6dso";
+        reg = <0x6a>;
+        status = "okay";
+    };
+};
+
+&pinctrl {
+    i2c30_default: i2c30_default {
+        group1 {
+            psels = <NRF_PSEL(TWIM_SCL, 0, 3)>,
+                    <NRF_PSEL(TWIM_SDA, 0, 4)>;
+        };
+    };
+
+    i2c30_sleep: i2c30_sleep {
+        group1 {
+            psels = <NRF_PSEL(TWIM_SCL, 0, 3)>,
+                    <NRF_PSEL(TWIM_SDA, 0, 4)>;
+            low-power-enable;
+        };
+    };
 };

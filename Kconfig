@@ -1,0 +1,9 @@
+source "Kconfig.zephyr"
+
+config IMU
+    bool "enable my imu"
+    default n
+
+config BMP580
+    bool "enable my bmp"
+    default n

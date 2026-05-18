@@ -8,13 +8,16 @@
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/sys/printk.h>
 
+// 看视频跟做
+#include <zephyr/drivers/i2c.h>
+
 #define SEA_LEVEL_PRESSURE_KPA 101.325
 
-#if !DT_HAS_ALIAS(pressure_sensor)
-#error "Missing devicetree alias: pressure_sensor"
+#if !DT_HAS_ALIAS(bmp581)
+#error "Missing devicetree alias: bmp581"
 #endif
 
-static const struct device *const pressure_dev = DEVICE_DT_GET(DT_ALIAS(pressure_sensor));
+static const struct device *const pressure_dev = DEVICE_DT_GET(DT_ALIAS(bmp581));
 
 static double pressure_to_altitude_m(double pressure_kpa)
 {

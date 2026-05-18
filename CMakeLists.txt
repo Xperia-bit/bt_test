@@ -7,8 +7,7 @@ set(DTC_OVERLAY_FILE
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(bt_test)
 
-target_sources(app PRIVATE
-  src/main.c
-  src/imu.c
-  src/sensor.c
-)
+target_sources(app PRIVATE src/main.c)
+target_sources_ifdef(CONFIG_IMU app PRIVATE src/imu.c)
+target_sources_ifdef(CONFIG_SENSOR app PRIVATE src/sensor.c)
+
