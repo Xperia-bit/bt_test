@@ -118,18 +118,18 @@ int main(void)
 	int64_t next_imu_log = 0;
 	ret = sensor_init_all();
 	if (ret != 0) {
-		printf("sensor_init_all failed: %d\n", ret);
+		printk("sensor_init_all failed: %d\n", ret);
 		return 0;
 	}
 
 	ret = imu_init();
 	if (ret != 0) {
-		printf("imu_init failed: %d\n", ret);
+		printk("imu_init failed: %d\n", ret);
 		return 0;
 	}
 	#endif
 
-	printf("fusion_combo sample start\n");
+	printk("fusion_combo sample start\n");
 
 	err = bt_enable(bt_ready);
 	if (err) {
@@ -154,7 +154,7 @@ int main(void)
 			ret = sensor_fetch_all(&sensors);
 			if (ret == 0) {
 				if (sensors.pressure_valid || sensors.temperature_valid) {
-					printf("baro: pressure=%.3f kPa temp=%.3f C altitude=%.3f m\n",
+					printk("baro: pressure=%.3f kPa temp=%.3f C altitude=%.3f m\n",
 						sensors.pressure_kpa,
 						sensors.temperature_c,
 						sensors.altitude_m);
@@ -167,7 +167,7 @@ int main(void)
 
 		#ifdef CONFIG_IMU
 		if (imu_ret == 0 && k_uptime_get() >= next_imu_log) {
-			printf("imu: acc=(%.3f %.3f %.3f) gyro=(%.3f %.3f %.3f)\n",
+			printk("imu: acc=(%.3f %.3f %.3f) gyro=(%.3f %.3f %.3f)\n",
 					imu.accel_mps2[0], imu.accel_mps2[1], imu.accel_mps2[2],
 					imu.gyro_rps[0], imu.gyro_rps[1], imu.gyro_rps[2]);
 			next_imu_log = k_uptime_get() + 100;
