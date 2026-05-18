@@ -17,6 +17,11 @@
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/hci.h>
 
+#include <stdio.h>
+
+#include "imu.h"
+#include "sensor.h"
+
 #define DEVICE_NAME CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
 
@@ -97,6 +102,27 @@ int main(void)
 	gpio_is_ready_dt(&led);
 	gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE);
 
+	struct imu_sample imu;
+	struct sensor_sample_bundle sensors;
+	int ret;
+	int imu_ret;
+	int64_t next_sensor_log = 0;
+	int64_t next_imu_log = 0;
+
+	printf("fusion_combo sample start\n");
+
+	// ret = sensor_init_all();
+	// if (ret != 0) {
+	// 	printf("sensor_init_all failed: %d\n", ret);
+	// 	return 0;
+	// }
+
+	// ret = imu_init();
+	// if (ret != 0) {
+	// 	printf("imu_init failed: %d\n", ret);
+	// 	return 0;
+	// }
+
 	err = bt_enable(bt_ready);
 	if (err) {
 		printk("Bluetooth init failed (err %d)\n", err);
@@ -115,5 +141,32 @@ int main(void)
 		}
 
 		k_sleep(K_MSEC(SLEEP_TIME_MS));
+
+		// while循环10ms读取一次传感器数据
+		// imu_ret = imu_fetch(&imu);
+		// if (k_uptime_get() >= next_sensor_log) {
+		// 	ret = sensor_fetch_all(&sensors);
+		// 	if (ret == 0) {
+		// 		if (sensors.pressure_valid || sensors.temperature_valid) {
+		// 			printf("baro: pressure=%.3f kPa temp=%.3f C altitude=%.3f m\n",
+		// 			       sensors.pressure_kpa,
+		// 			       sensors.temperature_c,
+		// 			       sensors.altitude_m);
+		// 		}
+		// 	}
+
+		// 	next_sensor_log = k_uptime_get() + 500;
+		// }
+
+		// if (imu_ret == 0 && k_uptime_get() >= next_imu_log) {
+		// 	printf("imu: acc=(%.3f %.3f %.3f) gyro=(%.3f %.3f %.3f)\n",
+		// 	       imu.accel_mps2[0], imu.accel_mps2[1], imu.accel_mps2[2],
+		// 	       imu.gyro_rps[0], imu.gyro_rps[1], imu.gyro_rps[2]);
+		// 	next_imu_log = k_uptime_get() + 100;
+		// }
+
+		// k_sleep(K_MSEC(10));
 	}
 }
+
+
