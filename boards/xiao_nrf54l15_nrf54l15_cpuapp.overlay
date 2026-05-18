@@ -3,12 +3,18 @@
 
 / {
 	aliases {
-		pressure_sensor = &bmp581;
-		imu_sensor = &lsm6dso;
+		pressure-sensor = &bmp581;
+		imu-sensor = &lsm6dso;
 	};
 };
 
-&i2c1 {
+/* Disable the reference-board IMU node; this design uses an external LSM6DSO. */
+&lsm6ds3tr_c {
+	status = "disabled";
+};
+
+/* P0.04 = SDA, P0.03 = SCL on this board definition. */
+&i2c30 {
 	status = "okay";
 
 	bmp581: bmp581@46 {
@@ -26,10 +32,6 @@
 	lsm6dso: lsm6dso@6a {
 		compatible = "st,lsm6dso";
 		reg = <0x6a>;
-		accel-range = <LSM6DSO_DT_FS_4G>;
-		accel-odr = <LSM6DSO_DT_ODR_104Hz>;
-		gyro-range = <LSM6DSO_DT_FS_2000DPS>;
-		gyro-odr = <LSM6DSO_DT_ODR_104Hz>;
 		status = "okay";
 	};
 };
