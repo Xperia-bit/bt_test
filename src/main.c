@@ -76,16 +76,19 @@ static const struct bt_data sd[] = {
 #define LED0_NODE DT_ALIAS(led0)
 static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
 
-// 两个使能引脚
-#define PWR_NODE DT_ALIAS(pwrkey)
-static const struct gpio_dt_spec pwr_key = GPIO_DT_SPEC_GET(PWR_NODE, gpios);
+// 使能引脚
 #define SENSOR_NODE DT_ALIAS(sensorsw)
 static const struct gpio_dt_spec sensor_enable = GPIO_DT_SPEC_GET(SENSOR_NODE, gpios);
+
+// pwr-key
+#define PWR_NODE DT_ALIAS(pwrkey)
+static const struct gpio_dt_spec pwr_key = GPIO_DT_SPEC_GET(PWR_NODE, gpios);
 
 // 板载button
 #define SW0_NODE	DT_ALIAS(sw0) 
 static const struct gpio_dt_spec button = GPIO_DT_SPEC_GET(SW0_NODE, gpios);
 static struct gpio_callback button_cb_data;
+// static struct gpio_callback key_cb_data;
 static uint32_t last_button_press_ms;
 
 // 把中断执行的任务放在另一个队列中执行，不占用中断
@@ -148,10 +151,14 @@ int main(void)
 	gpio_is_ready_dt(&led);
 	gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE);
 	// 初始化使能引脚
-	gpio_is_ready_dt(&pwr_key);
-	gpio_pin_configure_dt(&pwr_key, GPIO_OUTPUT_ACTIVE);
 	gpio_is_ready_dt(&sensor_enable);
 	gpio_pin_configure_dt(&sensor_enable, GPIO_OUTPUT_ACTIVE);
+	// 初始化pwr-key
+	// device_is_ready(pwr_key.port);
+	// gpio_pin_configure_dt(&pwr_key, GPIO_INPUT);
+	// gpio_pin_interrupt_configure_dt(&pwr_key, GPIO_INT_EDGE_TO_ACTIVE);		//设置key的中断模式->按下激活时触发
+	// gpio_init_callback(&key_cb_data, button_pressed, BIT(pwr_key.pin)); 	
+	// gpio_add_callback(pwr_key.port, &key_cb_data);
 	// 初始化板载button
 	device_is_ready(button.port);
 	gpio_pin_configure_dt(&button, GPIO_INPUT | GPIO_PULL_UP);

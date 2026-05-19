@@ -2,17 +2,23 @@
 
 / {
     /* 1. 自定义输出引脚节点 */
-    pwr_key_out: pwr-key-out {
+    gpio_enable: gpio-enable {
         compatible = "gpio-leds";
-        pwrkey: pwr_key {
-            gpios = <&gpio2 10 GPIO_ACTIVE_HIGH>;
-            label = "Power Key";
-        };
+
         sensorable: sensor_enable {
             gpios = <&gpio1 5 GPIO_ACTIVE_HIGH>;
             label = "Sensor Enable";
         };
     };
+    keys: keys {
+		compatible = "gpio-keys";
+
+		pwrkey: pwrkey {
+			gpios = <&gpio2 10 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+			zephyr,code = <INPUT_KEY_ENTER>;
+            label = "PWR KEY";
+		};
+	};
 
     /* 2. 别名 */
     aliases {
