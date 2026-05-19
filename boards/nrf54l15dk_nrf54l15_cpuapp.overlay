@@ -1,0 +1,121 @@
+// To get started, press Ctrl+Space to bring up the completion menu and view the available nodes.
+
+// You can also use the buttons in the sidebar to perform actions on nodes.
+// Actions currently available include:
+
+// * Enabling / disabling the node
+// * Adding the bus to a bus
+// * Removing the node
+// * Connecting ADC channels
+
+// For more help, browse the DeviceTree documentation at https://docs.zephyrproject.org/latest/guides/dts/index.html
+// You can also visit the nRF DeviceTree extension documentation at https://docs.nordicsemi.com/bundle/nrf-connect-vscode/page/guides/ncs_configure_app.html#devicetree-support-in-the-extension
+&spi00 {
+	status = "disabled";
+};
+
+&mx25r64 {
+	status = "disabled";
+};
+
+/ {
+	chosen {
+		nordic,nus-uart = &uart00;
+		zephyr,console = &uart00;
+	};
+};
+
+&uart00 {
+	status = "okay";
+	current-speed = <115200>;
+	clocks = <&hfpll>;
+	compatible = "nordic,nrf-uarte";
+	pinctrl-0 = <&uart00_default>;
+	pinctrl-1 = <&uart00_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+&pinctrl {
+	uart00_default: uart00_default {
+		group1 {
+			psels = <NRF_PSEL(UART_TX, 2, 2)>;
+		};
+
+		group2 {
+			psels = <NRF_PSEL(UART_RX, 2, 0)>;
+			bias-pull-up;
+		};
+	};
+
+	uart00_sleep: uart00_sleep {
+		group1 {
+			psels = <NRF_PSEL(UART_TX, 2, 2)>;
+		};
+	};
+};
+
+
+/ {
+    /* 1. 自定义输出引脚节点 */
+    pwr_key_out: pwr-key-out {
+        compatible = "gpio-leds";
+        pwr_key: pwr_key {
+            gpios = <&gpio2 10 GPIO_ACTIVE_LOW>;
+            label = "Power Key";
+        };
+        sensor_enable: sensor_enable {
+            gpios = <&gpio1 5 GPIO_ACTIVE_HIGH>;
+            label = "Sensor Enable";
+        };
+    };
+
+    /* 2. 别名 */
+    aliases {
+        pwr-key-gpio = &pwr_key;
+        sensor-enable-gpio = &sensor_enable;
+		bmp581 = &bmp581;
+		lsm6dso = &lsm6dso;
+    };
+};
+
+/* 3. 外设配置 */
+&uart21 {
+    status = "disabled";
+};
+
+/* 4. I2C30 保持启用，并将其引脚重映射到 P0.03 和 P0.04 */
+&i2c30 {
+    status = "okay";
+    pinctrl-0 = <&i2c30_default>;
+    pinctrl-1 = <&i2c30_sleep>;
+    pinctrl-names = "default", "sleep";
+
+    bmp581: bmp581@46 {
+        compatible = "bosch,bmp581";
+        reg = <0x46>;
+        status = "okay";
+    };
+
+    lsm6dso: lsm6dso@6a {
+        compatible = "st,lsm6dso";
+        reg = <0x6a>;
+        status = "okay";
+    };
+};
+
+&pinctrl {
+    i2c30_default: i2c30_default {
+        group1 {
+            psels = <NRF_PSEL(TWIM_SCL, 0, 3)>,
+                    <NRF_PSEL(TWIM_SDA, 0, 4)>;
+        };
+    };
+
+    i2c30_sleep: i2c30_sleep {
+        group1 {
+            psels = <NRF_PSEL(TWIM_SCL, 0, 3)>,
+                    <NRF_PSEL(TWIM_SDA, 0, 4)>;
+            low-power-enable;
+        };
+    };
+};
