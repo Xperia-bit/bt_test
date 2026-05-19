@@ -13,7 +13,6 @@
 #include <zephyr/kernel.h>
 
 #include <zephyr/drivers/gpio.h>
-// #include <zephyr/input/input.h>
 
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/hci.h>
@@ -71,6 +70,7 @@ static const struct bt_data sd[] = {
 };
 
 #define SLEEP_TIME_MS 1000
+#define BUTTON_DEBOUNCE_MS 30
 
 // LED引脚
 #define LED0_NODE DT_ALIAS(led0)
@@ -85,32 +85,31 @@ static const struct gpio_dt_spec sensor_enable = GPIO_DT_SPEC_GET(SENSOR_NODE, g
 // 板载button
 #define SW0_NODE	DT_ALIAS(sw0) 
 static const struct gpio_dt_spec button = GPIO_DT_SPEC_GET(SW0_NODE, gpios);
+static struct gpio_callback button_cb_data;
+static uint32_t last_button_press_ms;
 
-// // 按键回调
-// static void button_input_cb(struct input_event *evt, void *user_data)
-// {
-// 	if (evt->sync == 0) {
-// 		return;
-// 	}
+// 把中断执行的任务放在另一个队列中执行，不占用中断
+void button_work(struct k_work *work)
+{
+	gpio_pin_toggle_dt(&led);
+};
+K_WORK_DEFINE(button_wk,button_work);
+// 按键中断回调函数
+void button_pressed(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
+{
+	uint32_t now = k_uptime_get_32();
 
-// 	// printk("Button %d %s at %" PRIu32 "\n",
-// 	//        evt->code,
-// 	//        evt->value ? "pressed" : "released",
-// 	//        k_cycle_get_32());
+	ARG_UNUSED(dev);
+	ARG_UNUSED(cb);
+	ARG_UNUSED(pins);
 
-// 	// if(evt->value == 0)
-// 	// {
-// 	// 	// 按下灯灭
-// 	// 	gpio_pin_set_dt(&led, 0);
-// 	// }
-// 	// else
-// 	// {
-// 	// 	// 松开灯亮
-// 	// 	gpio_pin_set_dt(&led, 1);
-// 	// }	
-// }
+	if ((now - last_button_press_ms) < BUTTON_DEBOUNCE_MS) {
+		return;
+	}
 
-// INPUT_CALLBACK_DEFINE(NULL, button_input_cb, NULL);
+	last_button_press_ms = now;
+	k_work_submit(&button_wk);
+}
 
 static int update_adv_payload(uint8_t count, float acc_x, float pressure)
 {
@@ -155,7 +154,10 @@ int main(void)
 	gpio_pin_configure_dt(&sensor_enable, GPIO_OUTPUT_ACTIVE);
 	// 初始化板载button
 	device_is_ready(button.port);
-	gpio_pin_configure_dt(&button, GPIO_INPUT);
+	gpio_pin_configure_dt(&button, GPIO_INPUT | GPIO_PULL_UP);
+	gpio_pin_interrupt_configure_dt(&button, GPIO_INT_EDGE_TO_ACTIVE);		//设置button的中断模式->按下激活时触发
+	gpio_init_callback(&button_cb_data, button_pressed, BIT(button.pin)); 	
+	gpio_add_callback(button.port, &button_cb_data);
 
 	gpio_pin_set_dt(&led, 1);
 
@@ -188,19 +190,11 @@ int main(void)
 
 	while (1) {
 		// gpio_pin_toggle_dt(&led);
-		bool val = gpio_pin_get_dt(&button);
-		if(val)
-		{
-			gpio_pin_set_dt(&led, 1);
-		}
-		else
-		{
-			gpio_pin_set_dt(&led, 0);
-		}
+
+		// 更新广播数据
 		count++;
 		acc_x += 1.0f;
 		pressure += 1.0f;
-
 		err = update_adv_payload(count, acc_x, pressure);
 		if (err) {
 			printk("Advertising data update failed (err %d)\n", err);
@@ -232,7 +226,6 @@ int main(void)
 		}
 		#endif
 
-		// k_sleep(K_MSEC(SLEEP_TIME_MS));
 		k_msleep(SLEEP_TIME_MS);
 	}
 }
