@@ -1,12 +1,14 @@
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
 / {
     /* 1. 自定义输出引脚节点 */
     pwr_key_out: pwr-key-out {
         compatible = "gpio-leds";
-        pwr_key: pwr_key {
-            gpios = <&gpio2 10 GPIO_ACTIVE_LOW>;
+        pwrkey: pwr_key {
+            gpios = <&gpio2 10 GPIO_ACTIVE_HIGH>;
             label = "Power Key";
         };
-        sensor_enable: sensor_enable {
+        sensorable: sensor_enable {
             gpios = <&gpio1 5 GPIO_ACTIVE_HIGH>;
             label = "Sensor Enable";
         };
@@ -14,12 +16,20 @@
 
     /* 2. 别名 */
     aliases {
-        pwr-key-gpio = &pwr_key;
-        sensor-enable-gpio = &sensor_enable;
+        pwrkey = &pwrkey;
+        sensorsw = &sensorable;
 		bmp581 = &bmp581;
 		lsm6dso = &lsm6dso;
     };
 };
+
+// &usr_btn {  
+//     // 直接引用按钮的标签
+//     gpios = <&gpio0 0 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+//     label = "USR";
+//     zephyr,code = <INPUT_KEY_0>;  // 修改按键码
+// };
+
 
 /* 3. 外设配置 */
 &uart21 {

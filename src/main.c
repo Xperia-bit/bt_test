@@ -13,6 +13,7 @@
 #include <zephyr/kernel.h>
 
 #include <zephyr/drivers/gpio.h>
+// #include <zephyr/input/input.h>
 
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/hci.h>
@@ -70,8 +71,42 @@ static const struct bt_data sd[] = {
 };
 
 #define SLEEP_TIME_MS 1000
+
+// LED引脚
 #define LED0_NODE DT_ALIAS(led0)
 static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
+
+// 两个使能引脚
+#define PWR_NODE DT_ALIAS(pwrkey)
+static const struct gpio_dt_spec pwr_key = GPIO_DT_SPEC_GET(PWR_NODE, gpios);
+#define SENSOR_NODE DT_ALIAS(sensorsw)
+static const struct gpio_dt_spec sensor_enable = GPIO_DT_SPEC_GET(SENSOR_NODE, gpios);
+
+// // 按键回调
+// static void button_input_cb(struct input_event *evt, void *user_data)
+// {
+// 	if (evt->sync == 0) {
+// 		return;
+// 	}
+
+// 	// printk("Button %d %s at %" PRIu32 "\n",
+// 	//        evt->code,
+// 	//        evt->value ? "pressed" : "released",
+// 	//        k_cycle_get_32());
+
+// 	// if(evt->value == 0)
+// 	// {
+// 	// 	// 按下灯灭
+// 	// 	gpio_pin_set_dt(&led, 0);
+// 	// }
+// 	// else
+// 	// {
+// 	// 	// 松开灯亮
+// 	// 	gpio_pin_set_dt(&led, 1);
+// 	// }	
+// }
+
+// INPUT_CALLBACK_DEFINE(NULL, button_input_cb, NULL);
 
 static int update_adv_payload(uint8_t count, float acc_x, float pressure)
 {
@@ -106,8 +141,16 @@ int main(void)
 	float acc_x = 9.8f;
 	float pressure = 1.01f;
 
+	// 初始化led
 	gpio_is_ready_dt(&led);
 	gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE);
+	// 初始化使能引脚
+	gpio_is_ready_dt(&pwr_key);
+	gpio_pin_configure_dt(&pwr_key, GPIO_OUTPUT_ACTIVE);
+	gpio_is_ready_dt(&sensor_enable);
+	gpio_pin_configure_dt(&sensor_enable, GPIO_OUTPUT_ACTIVE);
+
+	// gpio_pin_set_dt(&led, 1);
 
 	#if defined(CONFIG_BMP580) && defined(CONFIG_IMU)
 	struct imu_sample imu;
