@@ -82,6 +82,10 @@ static const struct gpio_dt_spec pwr_key = GPIO_DT_SPEC_GET(PWR_NODE, gpios);
 #define SENSOR_NODE DT_ALIAS(sensorsw)
 static const struct gpio_dt_spec sensor_enable = GPIO_DT_SPEC_GET(SENSOR_NODE, gpios);
 
+// 板载button
+#define SW0_NODE	DT_ALIAS(sw0) 
+static const struct gpio_dt_spec button = GPIO_DT_SPEC_GET(SW0_NODE, gpios);
+
 // // 按键回调
 // static void button_input_cb(struct input_event *evt, void *user_data)
 // {
@@ -149,8 +153,11 @@ int main(void)
 	gpio_pin_configure_dt(&pwr_key, GPIO_OUTPUT_ACTIVE);
 	gpio_is_ready_dt(&sensor_enable);
 	gpio_pin_configure_dt(&sensor_enable, GPIO_OUTPUT_ACTIVE);
+	// 初始化板载button
+	device_is_ready(button.port);
+	gpio_pin_configure_dt(&button, GPIO_INPUT);
 
-	// gpio_pin_set_dt(&led, 1);
+	gpio_pin_set_dt(&led, 1);
 
 	#if defined(CONFIG_BMP580) && defined(CONFIG_IMU)
 	struct imu_sample imu;
@@ -180,8 +187,16 @@ int main(void)
 	}
 
 	while (1) {
-		gpio_pin_toggle_dt(&led);
-
+		// gpio_pin_toggle_dt(&led);
+		bool val = gpio_pin_get_dt(&button);
+		if(val)
+		{
+			gpio_pin_set_dt(&led, 1);
+		}
+		else
+		{
+			gpio_pin_set_dt(&led, 0);
+		}
 		count++;
 		acc_x += 1.0f;
 		pressure += 1.0f;
