@@ -34,6 +34,14 @@
     status = "disabled";
 };
 
+&uart30 {
+    status = "disabled";
+};
+
+&spi30 {
+    status = "disabled";
+};
+
 /* 4. I2C30 保持启用，并将其引脚重映射到 P0.03 和 P0.04 */
 &i2c30 {
     status = "okay";
